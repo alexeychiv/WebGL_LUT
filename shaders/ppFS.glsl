@@ -3,6 +3,7 @@
 precision mediump float;
 
 uniform uint uLutDimSize;
+uniform float uLutStr;
 uniform sampler2D uLut;
 uniform sampler2D uFrameTexture;
 
@@ -17,12 +18,17 @@ void main()
     float dim = float(uLutDimSize);
     
     float blueIndex = max((ceil(dim * texel.b) - 1.0), 0.0);
-    float greenIndex = max((ceil(dim * texel.g) - 1.0), 0.0) / dim;
-    float redIndex = max((ceil(dim * texel.r) - 1.0), 0.0) / dim / dim;
+    float greenIndex = max((ceil(dim * texel.g) - 1.0), 0.0);
+    float redIndex = max((ceil(dim * texel.r) - 1.0), 0.0) / dim;
     
-    float lutIndex = (blueIndex + greenIndex + redIndex) / dim + 0.0039;
+    float lutIndexX = (blueIndex + redIndex) / dim + 0.0039;
+    float lutIndexY = greenIndex / dim + 0.0039;
     
-    fragColor = texture(uLut, vec2(lutIndex, 0.0));
-    //fragColor = texture(uLut, vFragTexCoord);
+    vec4 lutColor = texture(uLut, vec2(lutIndexX, lutIndexY));
+    
+    //vec4 lutColor = texture(uLut, vFragTexCoord);
+    fragColor = vec4(mix(texel.rgb, lutColor.rgb, uLutStr), texel.a);
+    
+    //fragColor = lutColor;
     //fragColor = texel;
 }

@@ -9,6 +9,8 @@ let resLoadList = [
     { name: "ppVSsource", type: "text", path: "./shaders/ppVS.glsl" },
     { name: "ppFSsource", type: "text", path: "./shaders/ppFS.glsl" },
     { name: "crateTexture", type: "img", path: "./res/crateTexture.png"},
+    //{ name: "lutTexture", type: "img", path: "./res/RGBTable16x1.png"},
+    { name: "lutTexture", type: "img", path: "./res/lut.png"},
     { name: "mesh", type: "json", path: "./res/crate.json"},
 ];
 
@@ -153,7 +155,7 @@ class App
         //=======================================================================
         //LUT TEXTURE
         
-        let lut = new Uint8Array(
+        /* let lut = new Uint8Array(
             [
                 //b0 ---------------
                 //g0
@@ -203,14 +205,17 @@ class App
                 127, 255, 255,
                 255, 255, 255,
             ]
-        );
+        ); */
         
-        let lutDimSize = 3;
+        let lutDimSize = 16;
         
         let lutTexture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, lutTexture);
         
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, lut.length / lutDimSize, 1, 0, gl.RGB, gl.UNSIGNED_BYTE, lut);
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+        //gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, lut.length / lutDimSize, 1, 0, gl.RGB, gl.UNSIGNED_BYTE, lut);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, resMap.get("lutTexture"));
+        
         
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
@@ -218,6 +223,7 @@ class App
         gl.bindTexture(gl.TEXTURE_2D, null);
         
         ppProgram["uLutDimSize"] = gl.getUniformLocation(ppProgram.prog, "uLutDimSize");
+        ppProgram["uLutStr"] = gl.getUniformLocation(ppProgram.prog, "uLutStr");
         ppProgram["uLut"] = gl.getUniformLocation(ppProgram.prog, "uLut");
         
         gl.useProgram(ppProgram.prog);
@@ -303,6 +309,7 @@ class App
         let mRotationY = new Float32Array(16);
         
         let doUseLUT = true;
+        let lutStr = 0.5;
         
         let loop = function ()
         {
@@ -372,6 +379,8 @@ class App
                 
                 gl.useProgram(ppProgram.prog);
                 
+                gl.uniform1f(ppProgram.uLutStr, lutStr);
+                
                 gl.bindBuffer(gl.ARRAY_BUFFER, frameBufferVBO);
                 
                 gl.activeTexture(gl.TEXTURE1);
@@ -395,6 +404,8 @@ class App
         btnNoLUT.onclick = () => doUseLUT = false;
         let btnLUT = document.getElementById("btnLUT");
         btnLUT.onclick = () => doUseLUT = true;
+        var rngLUTStr = document.getElementById("rngLUTStr");
+        rngLUTStr.oninput = () => lutStr = rngLUTStr.value / 100;
         
         requestAnimationFrame(loop);
         
